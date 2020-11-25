@@ -9,9 +9,7 @@ import os
 
 def main():
 
-    os.system("rm exons.bed")
     os.system("rm exons.fasta")
-    os.system("rm sorted_exons.bed")
 
 
     parser = argparse.ArgumentParser()
@@ -41,7 +39,7 @@ def main():
             chrom, _, feature, start, stop, _, strand, _, anno = line.strip().split("\t")
             if feature == 'exon':
                 gene_id = anno.strip().split('; ')[0].split(' ')[1].strip('"')
-                transcript_id = anno.strip().split('; ')[1].split(' ')[1].strip('"')
+                transcript_id = anno.strip().split('; ')[1].split(' ')[1].strip('"').split(".")[0]
                 gene_type = anno.strip().split('; ')[2].split(' ')[1].strip('"')
                 gene_status = anno.strip().split('; ')[3].split(' ')[1].strip('"')
                 gene_name = anno.strip().split('; ')[4].split(' ')[1].strip('"')
@@ -59,7 +57,9 @@ def main():
 #exons.add(tuple([transcript_name, exon_name, exon_number, chrom, start, stop, strand]))
     os.system("sort -V -k1,1 -k2,2 exons.bed > sorted_exons.bed")
     os.system("bedtools getfasta -fi GRCh37.primary_assembly.genome.fa -bed sorted_exons.bed  -name -s -fo exons.fasta")
-    os.system("sort -V -k1,1 -k2,2 exons.bed > sorted_exons.bed")
+
+    os.system("rm exons.bed")
+    os.system("rm sorted_exons.bed")
 
     genes_exons = set()
     with open('exons.fasta','r') as exons:
