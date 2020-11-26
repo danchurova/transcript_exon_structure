@@ -56,7 +56,7 @@ def main():
                     bed_file.close()
 #exons.add(tuple([transcript_name, exon_name, exon_number, chrom, start, stop, strand]))
     os.system("sort -V -k1,1 -k2,2 exons.bed > sorted_exons.bed")
-    os.system("bedtools getfasta -fi GRCh37.primary_assembly.genome.fa -bed sorted_exons.bed  -name -s -fo exons.fasta")
+    os.system("bedtools getfasta -fi {0} -bed sorted_exons.bed  -name -s -fo exons.fasta".format(args.fasta))
 
     os.system("rm exons.bed")
     os.system("rm sorted_exons.bed")
