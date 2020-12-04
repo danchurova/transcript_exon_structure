@@ -37,7 +37,7 @@ def main():
     for line in gtf_data:
         if not line.startswith('#'):
             chrom, _, feature, start, stop, _, strand, _, anno = line.strip().split("\t")
-            if feature == 'exon':
+            if feature == 'CDS':
                 gene_id = anno.strip().split('; ')[0].split(' ')[1].strip('"')
                 transcript_id = anno.strip().split('; ')[1].split(' ')[1].strip('"').split(".")[0]
                 gene_type = anno.strip().split('; ')[2].split(' ')[1].strip('"')
@@ -50,9 +50,13 @@ def main():
 
                 if transcript_type == 'protein_coding':
                     with open('exons.bed','a') as bed_file:
+                        if strand=='+':
                         #bed_file.write(chrom, start, stop, exon_name, exon_number, strand, sep="\t")
-                        bed_file.writelines("\t".join([chrom, start, stop, str(gene_name+'_'+transcript_id+'_'+exon_name+'_'+exon_number),exon_number, strand]))
-                        bed_file.writelines('\n')
+                            bed_file.writelines("\t".join([chrom, start, str(int(stop)+1), str(gene_name+'_'+transcript_id+'_'+exon_name+'_'+exon_number),exon_number, strand]))
+                            bed_file.writelines('\n')
+                        elif strand=='-':
+                            bed_file.writelines("\t".join([chrom, str(int(start)-1), stop, str(gene_name+'_'+transcript_id+'_'+exon_name+'_'+exon_number),exon_number, strand]))
+                            bed_file.writelines('\n')
                     bed_file.close()
 #exons.add(tuple([transcript_name, exon_name, exon_number, chrom, start, stop, strand]))
     os.system("sort -V -k1,1 -k2,2 exons.bed > sorted_exons.bed")
@@ -86,14 +90,62 @@ def main():
                 transcript_dict[item[2]] = [item[3],item[7]]
 
     sorted_transcript_dict = {k: v for k, v in sorted(transcript_dict.items(), key=lambda item:int(item[1][0]))}
+    print(sorted_transcript_dict)
 
-    sequence = ""
+    seq = ""
     for key, value in sorted_transcript_dict.items():
-        sequence += value[1]
-        sequence += '|'
+        seq += value[1]
+        seq += '|'
     print(args.transcript_id)
-    print(sequence)
+    print(seq)
 
+    table = {
+            'ATA':'I', 'ATC':'I', 'ATT':'I', 'ATG':'M',
+            'ACA':'T', 'ACC':'T', 'ACG':'T', 'ACT':'T',
+            'AAC':'N', 'AAT':'N', 'AAA':'K', 'AAG':'K',
+            'AGC':'S', 'AGT':'S', 'AGA':'R', 'AGG':'R',
+            'CTA':'L', 'CTC':'L', 'CTG':'L', 'CTT':'L',
+            'CCA':'P', 'CCC':'P', 'CCG':'P', 'CCT':'P',
+            'CAC':'H', 'CAT':'H', 'CAA':'Q', 'CAG':'Q',
+            'CGA':'R', 'CGC':'R', 'CGG':'R', 'CGT':'R',
+            'GTA':'V', 'GTC':'V', 'GTG':'V', 'GTT':'V',
+            'GCA':'A', 'GCC':'A', 'GCG':'A', 'GCT':'A',
+            'GAC':'D', 'GAT':'D', 'GAA':'E', 'GAG':'E',
+            'GGA':'G', 'GGC':'G', 'GGG':'G', 'GGT':'G',
+            'TCA':'S', 'TCC':'S', 'TCG':'S', 'TCT':'S',
+            'TTC':'F', 'TTT':'F', 'TTA':'L', 'TTG':'L',
+            'TAC':'Y', 'TAT':'Y', 'TAA':'_', 'TAG':'_',
+            'TGC':'C', 'TGT':'C', 'TGA':'_', 'TGG':'W'}
 
+    protein =""
+
+    i=0
+    while len(seq)>=i+3:
+        codon = seq[i:i + 3]
+        if len(codon) == 3:
+            if codon[0]=='|':
+                protein += '|'
+                i = i+1
+                codon = seq[i:i + 3]
+                protein += table[codon]
+            elif codon[1]=='|':
+                protein+='|'
+                codon=seq[i]+seq[i+2:i+4]
+                protein += table[codon]
+                i=i+1
+            elif codon[2] == '|':
+                if len(seq)>i+3:
+                    codon = seq[i:i+2]+seq[i+3]
+                    protein+=table[codon]
+                    protein+='|'
+                    i=i+1
+                else:
+                    break
+            else:
+                protein += table[codon]
+        else:
+            continue
+        i=i+3
+    print(protein)
 if __name__ == '__main__':
     main()
