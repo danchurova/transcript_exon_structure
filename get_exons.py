@@ -48,11 +48,11 @@ def main():
                 exon_number = anno.strip().split('; ')[8].split(' ')[1].strip('"')
                 exon_name = anno.strip().split('; ')[9].split(' ')[1].strip('"')
 
-                if transcript_type == 'protein_coding':
+                if 'protein_coding' in anno:
                     with open('exons.bed','a') as bed_file:
                         if strand=='+':
                         #bed_file.write(chrom, start, stop, exon_name, exon_number, strand, sep="\t")
-                            bed_file.writelines("\t".join([chrom, start, str(int(stop)+1), str(gene_name+'_'+transcript_id+'_'+exon_name+'_'+exon_number),exon_number, strand]))
+                            bed_file.writelines("\t".join([chrom, str(int(start)-1), stop, str(gene_name+'_'+transcript_id+'_'+exon_name+'_'+exon_number),exon_number, strand]))
                             bed_file.writelines('\n')
                         elif strand=='-':
                             bed_file.writelines("\t".join([chrom, str(int(start)-1), stop, str(gene_name+'_'+transcript_id+'_'+exon_name+'_'+exon_number),exon_number, strand]))
